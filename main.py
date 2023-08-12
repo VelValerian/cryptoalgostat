@@ -15,6 +15,11 @@ help_command = """
 /help - command list
 /exchanges - cryptocurrency exchanges list"""
 
+exchanges = """
+Binance
+Huobi
+OKX"""
+
 kb = ReplyKeyboardMarkup(resize_keyboard=True)
 butt_1 = KeyboardButton('/help')
 butt_2 = KeyboardButton('/exchanges')
@@ -25,13 +30,21 @@ async def on_startup(_):
     print('Bot is up! \nReady to use')
 
 # Start command handler
+@dp.message_handler(commands='start')
+async def start_cmd(message: types.Message):
+    await bot.send_message(chat_id=message.from_user.id,
+                           text=md.text('Hello! Welcome to <b>Crypto Cryptocurrency Statistic Bot</b>'),
+                           reply_markup=kb)
+    await message.delete()
+    user_id = message.from_user.id
 @dp.message_handler(commands='help')
 async def help_cmd(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id, text=help_command, reply_markup=kb)
+    await message.delete()
 
 @dp.message_handler(commands='exchanges')
 async def country_cmd(message: types.Message):
-    await bot.send_message(chat_id=message.from_user.id, text=, reply_markup=kb)
+    await bot.send_message(chat_id=message.from_user.id, text=exchanges, reply_markup=kb)
     await message.delete()
 
 if __name__ == '__main__':
