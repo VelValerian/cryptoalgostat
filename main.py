@@ -69,16 +69,9 @@ async def binance_cmd(message: types.Message):
 async def echo(message: types.Message):
     user_msg = message.text
     client = UMFutures()
-    klines = client.continuous_klines(pair=user_msg,
-                                      contractType='PERPETUAL',
-                                      interval='1m',
-                                      limit=1)
-
-    df = pd.DataFrame(klines, columns=["timestamp", "open", "high", "low", "close", "volume", "close_time",
-                                    "quote_asset_volume", "number_of_trades", "taker_buy_base_asset_volume",
-                                    "taker_buy_quote_asset_volume", "ignore"])
-    df = df.iloc[0][1]
-    await bot.send_message(chat_id=message.from_user.id, text=f'{user_msg} -> {df}')
+    price = client.ticker_price(symbol=user_msg)
+    print(price['price'])
+    await bot.send_message(chat_id=message.from_user.id, text=f'{user_msg} -> {price}')
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp,
