@@ -3,6 +3,9 @@ import crets
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ParseMode, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 import aiogram.utils.markdown as md
+import pandas as pd
+from binance.um_futures import UMFutures
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,10 +31,10 @@ kb.add(butt_1,).add(butt_2,)
 
 kb_exchanges = ReplyKeyboardMarkup(resize_keyboard=True)
 butt_exchanges_1 = KeyboardButton('/Binance')
-butt_exchanges_2 = KeyboardButton('/Huobi')
-butt_exchanges_3 = KeyboardButton('/OKX')
+# butt_exchanges_2 = KeyboardButton('/Huobi')
+# butt_exchanges_3 = KeyboardButton('/OKX')
 
-kb_exchanges.add(butt_exchanges_1,).add(butt_exchanges_2, butt_exchanges_3)
+kb_exchanges.add(butt_exchanges_1,)#.add(butt_exchanges_2, butt_exchanges_3)
 
 async def on_startup(_):
     print('Bot is up! \nReady to use')
@@ -55,6 +58,27 @@ async def exchanges_cmd(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id, text=md.text('<b>Select Exchanges</b>'),
                            reply_markup=kb_exchanges)
     await message.delete()
+
+@dp.message_handler(commands='Binance')
+async def binance_cmd(message: types.Message):
+    await bot.send_message(chat_id=message.from_user.id, text='Please write Coin name you want know price',
+                           reply_markup=ReplyKeyboardRemove())
+
+
+@dp.message_handler()
+async def echo(message: types.Message):
+    user_msg = message.text
+    client = UMFutures()
+    klines = client.continuous_klines(pair=user_msg,
+                                      contractType='PERPETUAL',
+                                      interval='1m',
+                                      limit=1)
+
+    df = pd.DataFrame(klines, columns=["timestamp", "open", "high", "low", "close", "volume", "close_time",
+                                    "quote_asset_volume", "number_of_trades", "taker_buy_base_asset_volume",
+                                    "taker_buy_quote_asset_volume", "ignore"])
+    df = df.iloc[0][1]
+    await bot.send_message(chat_id=message.from_user.id, text=f'{user_msg} -> {df}')
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp,
