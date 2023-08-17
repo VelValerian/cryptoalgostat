@@ -13,6 +13,7 @@ logging.basicConfig(level=logging.INFO)
 # Initializate bot and dispatcher
 bot = Bot(token=crets.tg_key, parse_mode=ParseMode.HTML)
 dp = Dispatcher(bot)
+client = UMFutures()
 
 help_command = """
 /help - command list
@@ -39,6 +40,7 @@ kb_exchanges.add(butt_exchanges_1,)#.add(butt_exchanges_2, butt_exchanges_3)
 async def on_startup(_):
     print('Bot is up! \nReady to use')
 
+
 # Start command handler
 @dp.message_handler(commands='start')
 async def start_cmd(message: types.Message):
@@ -61,17 +63,31 @@ async def exchanges_cmd(message: types.Message):
 
 @dp.message_handler(commands='Binance')
 async def binance_cmd(message: types.Message):
-    await bot.send_message(chat_id=message.from_user.id, text='Please write Coin name you want know price',
+    await bot.send_message(chat_id=message.from_user.id, text=f'Please write Coin name you want know price. \n'
+                                                              f'Example: BTCUSDT',
                            reply_markup=ReplyKeyboardRemove())
 
 
 @dp.message_handler()
-async def echo(message: types.Message):
+async def user_msg_cmd(message: types.Message):
     user_msg = message.text
-    client = UMFutures()
-    price = client.ticker_price(symbol=user_msg)
-    print(price['price'])
-    await bot.send_message(chat_id=message.from_user.id, text=f'{user_msg} -> {price}')
+    def ticker():
+        tiker = client.book_ticker()
+        i = 0
+        coin_list = []
+        while i < len(tiker):
+            coin_ticker = tiker[i]
+            coin_list.append(coin_ticker["symbol"])
+            i += 1
+        return coin_list
+    coin_list = ticker()
+
+    if user_msg in coin_list:
+        price = client.ticker_price(symbol=user_msg)
+        await bot.send_message(chat_id=message.from_user.id, text=f'{user_msg} -> {price["price"]}$')
+    else:
+        await bot.send_message(chat_id=message.from_user.id, text=f"Not find this coin: {user_msg}")
+
 
 if __name__ == '__main__':
     executor.start_polling(dispatcher=dp,
